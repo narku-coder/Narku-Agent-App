@@ -7,7 +7,7 @@ huggingface_hub==1.14.0
 Jinja2==3.1.6
 litellm==1.81.7
 llvmlite==0.46.0
-openai==2.16.
+openai==2.16.2
 pydantic==2.12.5
 pydantic_core==2.41.5
 python-dotenv==1.2.1
