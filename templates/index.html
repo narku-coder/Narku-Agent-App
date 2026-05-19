@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Narku AI Agent Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .chat-container { max-width: 600px; margin: 0 auto; }
+        .response-box { 
+            min-height: 100px; 
+            white-space: pre-wrap; /* Preserves formatting */
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5 chat-container">
+    <div class="text-center mb-4">
+        <h1 class="fw-bold text-primary">AI Agent</h1>
+        <p class="text-muted">Ask about weather, stocks, or files.</p>
+    </div>
+
+    <div class="card shadow-sm rounded-4 border-0 mb-4">
+        <div class="card-body p-4">
+            <form id="agentForm">
+                <div class="mb-3">
+                    <label for="query" class="form-label fw-bold">Your Question</label>
+                    <textarea class="form-control form-control-lg" id="query" name="query" rows="3" placeholder="e.g. What is the weather in Singapore?" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 btn-lg rounded-pill py-3 fw-bold">
+                    Ask Agent 🚀
+                </button>
+                <button id="resetBtn" type="button" class="btn btn-outline-danger w-100 mt-2 rounded-pill">
+                    Clear History / Start New Topic
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="responseArea" class="d-none">
+        <div class="card shadow-sm rounded-4 border-0">
+            <div class="card-body p-4">
+                <h5 class="card-title fw-bold text-success mb-3">Agent Response:</h5>
+                <div id="responseText" class="response-box p-3 rounded border bg-light text-dark"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingSpinner" class="text-center d-none mt-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Thinking...</p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('agentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('query').value;
+        const responseArea = document.getElementById('responseArea');
+        const responseText = document.getElementById('responseText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // Reset UI
+        responseArea.classList.add('d-none');
+        responseText.innerHTML = '';
+        loadingSpinner.classList.remove('d-none');
+
+        // Send Request to Flask Backend
+        const formData = new FormData();
+        formData.append('query', query);
+
+        try {
+            const response = await fetch('/ask', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            // Display Result
+            loadingSpinner.classList.add('d-none');
+            responseArea.classList.remove('d-none');
+            responseText.textContent = data.response; // Use textContent for security
+            
+        } catch (error) {
+            loadingSpinner.classList.add('d-none');
+            alert('Error communicating with the agent.');
+        }
+    });
+    document.getElementById('resetBtn').addEventListener('click', async function() 
+    {
+        await fetch('/reset', { method: 'POST' });
+        document.getElementById('responseText').textContent = "Memory cleared! You can start a new topic.";
+        document.getElementById('responseArea').classList.remove('d-none');
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
