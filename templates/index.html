@@ -3,103 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Narku AI Agent Interface</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>AI Agent Chat</title>
     <style>
-        body { background-color: #f8f9fa; }
-        .chat-container { max-width: 600px; margin: 0 auto; }
-        .response-box { 
-            min-height: 100px; 
-            white-space: pre-wrap; /* Preserves formatting */
-            background-color: #fff;
+        /* Modern, clean reset */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* Main Chat Container */
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .chat-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Chat History Area */
+        .chat-box {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Shared Bubble Styles */
+        .message {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        /* User Message (Right aligned, Blue) */
+        .user-message {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        /* AI Message (Left aligned, Gray) */
+        .ai-message {
+            align-self: flex-start;
+            background-color: #e9ecef;
+            color: #333;
+            border-bottom-left-radius: 2px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+            background: #fff;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        button.send-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        button.send-btn:hover {
+            background-color: #218838;
         }
     </style>
 </head>
 <body>
 
-<div class="container py-5 chat-container">
-    <div class="text-center mb-4">
-        <h1 class="fw-bold text-primary">AI Agent</h1>
-        <p class="text-muted">Ask about weather, stocks, or files.</p>
+<div class="chat-container">
+    <div class="chat-header">
+        <span>Narku AI Agent</span>
+        <button class="reset-btn" onclick="resetChat()">Clear Memory</button>
     </div>
 
-    <div class="card shadow-sm rounded-4 border-0 mb-4">
-        <div class="card-body p-4">
-            <form id="agentForm">
-                <div class="mb-3">
-                    <label for="query" class="form-label fw-bold">Your Question</label>
-                    <textarea class="form-control form-control-lg" id="query" name="query" rows="3" placeholder="e.g. What is the weather in Singapore?" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 btn-lg rounded-pill py-3 fw-bold">
-                    Ask Agent 🚀
-                </button>
-                <button id="resetBtn" type="button" class="btn btn-outline-danger w-100 mt-2 rounded-pill">
-                    Clear History / Start New Topic
-                </button>
-            </form>
-        </div>
+    <div class="chat-box" id="chat-box">
+        <div class="message ai-message">Hello! How can I help you today?</div>
     </div>
 
-    <div id="responseArea" class="d-none">
-        <div class="card shadow-sm rounded-4 border-0">
-            <div class="card-body p-4">
-                <h5 class="card-title fw-bold text-success mb-3">Agent Response:</h5>
-                <div id="responseText" class="response-box p-3 rounded border bg-light text-dark"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="loadingSpinner" class="text-center d-none mt-4">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2 text-muted">Thinking...</p>
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Ask anything..." onkeypress="handleKeyPress(event)">
+        <button class="send-btn" onclick="sendMessage()">Send</button>
     </div>
 </div>
 
 <script>
-    document.getElementById('agentForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const query = document.getElementById('query').value;
-        const responseArea = document.getElementById('responseArea');
-        const responseText = document.getElementById('responseText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
 
-        // Reset UI
-        responseArea.classList.add('d-none');
-        responseText.innerHTML = '';
-        loadingSpinner.classList.remove('d-none');
+    // Allow pressing "Enter" to send
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
 
-        // Send Request to Flask Backend
-        const formData = new FormData();
-        formData.append('query', query);
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // 1. Display User Message instantly
+        appendMessage(text, 'user-message');
+        userInput.value = ''; // Clear input field
+
+        // Create a temporary "typing..." indicator
+        const loadingId = appendMessage("Thinking...", 'ai-message');
 
         try {
+            // 2. Send data to your Flask backend
+            const formData = new URLSearchParams();
+            formData.append('query', text);
+
             const response = await fetch('/ask', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
             });
+
             const data = await response.json();
-            
-            // Display Result
-            loadingSpinner.classList.add('d-none');
-            responseArea.classList.remove('d-none');
-            responseText.textContent = data.response; // Use textContent for security
-            
+
+            // 3. Remove "Thinking..." and display actual AI response
+            document.getElementById(loadingId).remove();
+            appendMessage(data.response, 'ai-message');
+
         } catch (error) {
-            loadingSpinner.classList.add('d-none');
-            alert('Error communicating with the agent.');
+            document.getElementById(loadingId).remove();
+            appendMessage("Error: Could not connect to server.", 'ai-message');
         }
-    });
-    document.getElementById('resetBtn').addEventListener('click', async function() 
-    {
+    }
+
+    // Helper function to create chat bubbles
+    function appendMessage(text, className) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${className}`;
+        msgDiv.textContent = text;
+        
+        // Assign a unique ID just in case we need to remove it (like the loading state)
+        const uniqueId = 'msg-' + Date.now();
+        msgDiv.id = uniqueId;
+
+        chatBox.appendChild(msgDiv);
+        
+        // Auto-scroll to the bottom
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        return uniqueId;
+    }
+
+    // Function to hook into your Flask /reset route
+    async function resetChat() {
         await fetch('/reset', { method: 'POST' });
-        document.getElementById('responseText').textContent = "Memory cleared! You can start a new topic.";
-        document.getElementById('responseArea').classList.remove('d-none');
-    });
+        chatBox.innerHTML = '<div class="message ai-message">Memory cleared. How can I help you?</div>';
+    }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
