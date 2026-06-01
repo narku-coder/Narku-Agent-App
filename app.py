@@ -1,7 +1,12 @@
 import os
 import requests
+import mysql.connector
+import json
+
 from flask import Flask, render_template, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
 from smolagents import ToolCallingAgent, LiteLLMModel, tool 
+from sqlalchemy import text
 
 app = Flask(__name__)
 
@@ -10,6 +15,9 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 STOCK_API_KEY = os.getenv("STOCK_API_KEY")  
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
+NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
+
+db = SQLAlchemy(app)
 
 # --- TOOLS DEFINITION ---
 @tool
@@ -167,13 +175,43 @@ def get_dnd_info(category: str, item_name: str = None) -> str:
             return f"Error: API returned status code {response.status_code}"
     except Exception as e:
         return f"Error fetching D&D data: {str(e)}"
-      
+    
+@tool
+def query_database(sql_query: str) -> str:
+    """
+    Executes a SQL query on the connected Neon PostgreSQL database.
+    
+    Args:
+        sql_query: The raw SQL query to execute (e.g., 'SELECT * FROM users').
+        
+    Returns:
+        str: A string representation of the data returned by the database, or an error message.
+    """
+    try:
+        # We need the app_context because SQLAlchemy requires it to execute queries outside of web routes
+        with app.app_context():
+            result = db.session.execute(text(sql_query))
+            
+            # If the agent is asking for data (SELECT), fetch and return the rows
+            if sql_query.strip().upper().startswith("SELECT"):
+                rows = result.fetchall()
+                # Convert the rows to a list of dictionaries so the AI can easily read it
+                return str([dict(row._mapping) for row in rows])
+            
+            # If the agent is writing/updating data, commit the transaction
+            db.session.commit()
+            return "Database updated successfully."
+            
+    except Exception as e:
+        return f"Error executing database query: {str(e)}"
+    
+     
 # --- AGENT SETUP ---
 model = LiteLLMModel(model_id="gpt-4o-mini", api_base="https://api.openai.com/v1")
 agent = ToolCallingAgent(
-    tools=[get_my_files, tavily_search, get_weather_info, get_stock_price, currency_exchange_tool, get_dnd_info],
+    tools=[get_my_files, tavily_search, get_weather_info, get_stock_price, currency_exchange_tool, get_dnd_info, query_database],
     model=model,
-    add_base_tools=False
+    add_base_tools=True
 )
 
 # --- WEB ROUTES ---
