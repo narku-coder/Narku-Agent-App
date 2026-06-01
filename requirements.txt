@@ -1,3 +1,4 @@
+ddgs==9.14.4
 fastapi==0.128.1
 Flask==3.1.2
 Flask-SQLAlchemy==3.1.1
