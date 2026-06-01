@@ -181,13 +181,20 @@ def get_dnd_info(category: str, item_name: str = None) -> str:
 @tool
 def query_database(sql_query: str) -> str:
     """
-    Executes a SQL query on the connected Neon PostgreSQL database.
+    Executes a SQL query on the connected PostgreSQL database.
+    
+    CRITICAL SCHEMA RULES:
+    - If the user asks about books, you MUST query the 'booktable'. 
+      (Assume columns: book_id, title, author, publisher, year_published)
+    - If the user asks about CDs, music, or albums, you MUST query the 'cdtable'.
+      (Assume columns: cd_id, title, artist, label, year_released)
+    - Do not invent tables or columns. Only use the ones listed above.
     
     Args:
-        sql_query: The raw SQL query to execute (e.g., 'SELECT * FROM users').
+        sql_query: The raw SQL query to execute (e.g., 'SELECT title FROM booktable WHERE author = \'Tolkien\'').
         
     Returns:
-        str: A string representation of the data returned by the database, or an error message.
+        str: A string representation of the data returned by the database.
     """
     try:
         # We need the app_context because SQLAlchemy requires it to execute queries outside of web routes
