@@ -1,6 +1,5 @@
 import os
 import requests
-import mysql.connector
 import json
 
 from flask import Flask, render_template, request, jsonify
