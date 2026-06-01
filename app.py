@@ -14,7 +14,10 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 STOCK_API_KEY = os.getenv("STOCK_API_KEY")  
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
-NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("NEON_DATABASE_URL")
+
+# Optional but recommended: suppresses a warning about tracking modifications
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
