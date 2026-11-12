@@ -189,6 +189,9 @@ def query_database(sql_query: str) -> str:
     - If the user asks about CDs, music, or albums, you MUST query the 'cdtable'.
       (Assume columns: cd_id, title, artist, label, year_released)
     - Do not invent tables or columns. Only use the ones listed above.
+
+    IMPORTANT: PostgreSQL is case-sensitive. You MUST use the ILIKE operator instead of '=' 
+    for all string comparisons (e.g., SELECT title FROM booktable WHERE author ILIKE '%Tolkien%').
     
     Args:
         sql_query: The raw SQL query to execute (e.g., 'SELECT title FROM booktable WHERE author = \'Tolkien\'').
